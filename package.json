@@ -1,0 +1,16 @@
+{
+  "name": "professionalbackend",
+  "version": "1.0.0",
+  "description": "a backend code is here with java script",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "backend",
+    "java",
+    "script"
+  ],
+  "author": "",
+  "license": "ISC"
+}
