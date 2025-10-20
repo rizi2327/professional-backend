@@ -14,4 +14,12 @@ app.use(express.static("Public"));
 app.use(cookieParser());  
 
 
+
+//routes
+import router from './routes/user.route';
+
+app.use('/api/v1/users',router);
+
+//http://localhost:5000/users/register
+
 export { app };
