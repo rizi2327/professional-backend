@@ -1,7 +1,7 @@
 import mongoose ,{Schema} from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-o
+
 
 
 
@@ -23,7 +23,7 @@ const userSchema= new Schema({
         type:String,
         required:[true,"Password is required"]
     },
-    full_name:{
+    fullName:{
         type:String,
         required:true,
         trim:true,
