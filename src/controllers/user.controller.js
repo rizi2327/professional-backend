@@ -4,7 +4,15 @@ import {asyncHandler} from '../utils//asyncHandler.js';
 import { uploadCloudinary } from '../utils/cloudinary.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 
-
+  //WRITE STEPS TO REGISTER USER
+  //.1 get data from frontend
+  //.2 validate data
+  //.3 check user already exist with email or username
+  //.4 upload avatar and cover image to cloudinary
+  //.5 create user in db
+  //.6 remove password and refresh token from response
+  //.7 check user created or not
+  //.8 send response to frontend
 
 
 
@@ -92,18 +100,5 @@ export const registerUser = asyncHandler(async (req,res)=>{
   return res.status(201).json(
     new ApiResponse(200, "User registered successfully", createdUser)
   )
-
-
-
-
-
-
-
-//   else{
-//   res.status(201).json({
-
-//     message:"User registered successfully",
-//   })
-// }
 
 });
