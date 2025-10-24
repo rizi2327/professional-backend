@@ -1,6 +1,6 @@
 import { User} from '../models/user.model.js';
 import { ApiError } from '../utils/ApiError.js';
-import {asyncHandler} from '../utils//asyncHandler.js';
+import {asyncHandler} from '../utils/asyncHandler.js';
 import { uploadCloudinary } from '../utils/cloudinary.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 
@@ -28,6 +28,9 @@ export const registerUser = asyncHandler(async (req,res)=>{
   // Logic Building kly :
   //steps lihkn
   //1. get data from fonntend
+//     console.log("Body:", req.body);
+// console.log("Files:", req.files);
+
     const {fullName,email,username,password, avatar}=req.body;
   // console.log("email:", email)//check krny kly k data aa raha bhi rha hai k nhi
   //2. vaidate krny kly
@@ -63,6 +66,7 @@ export const registerUser = asyncHandler(async (req,res)=>{
   }
 
 
+
    const Avatar=await uploadCloudinary(avatarLocalPath);
    const coverImage= await uploadCloudinary(imageLocalPath);
 
@@ -72,7 +76,7 @@ export const registerUser = asyncHandler(async (req,res)=>{
       'error  in uploading avatar'
     )
    }
-//step 5 : create user in db
+// //step 5 : create user in db
    const user=await User.create({
     fullName,
     email,
@@ -81,13 +85,13 @@ export const registerUser = asyncHandler(async (req,res)=>{
     avatar:Avatar.url,
     coverImage:coverImage?.url || "",
    })
-   //step 6 :remove password and refresh token from response
-  //  user.password=undefined;
-  //  user.refreshToken= undefined
+//    //step 6 :remove password and refresh token from response
+//   //  user.password=undefined;
+//   //  user.refreshToken= undefined
 
-  //step 7: check krny kly k user create hua hai k nhi
+//   //step 7: check krny kly k user create hua hai k nhi
 
-  const createdUser= await user.findById(user._id).select(
+  const createdUser= await User.findById(user._id).select(
     "-password -refreshToken"//yeh dono field remove kr dega response se
   );
 
@@ -98,7 +102,7 @@ export const registerUser = asyncHandler(async (req,res)=>{
   }
   //step 8: send response to frontend
   return res.status(201).json(
-    new ApiResponse(200, "User registered successfully", createdUser)
+    new ApiResponse(200, "User registered successfully")
   )
 
 });
