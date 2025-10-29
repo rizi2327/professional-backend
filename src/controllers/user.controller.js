@@ -31,7 +31,8 @@ export const registerUser = asyncHandler(async (req,res)=>{
 //     console.log("Body:", req.body);
 // console.log("Files:", req.files);
 
-    const {fullName,email,username,password, avatar}=req.body;
+
+    const {fullName,email,username,password, avatar,coverImage}=req.body;
   // console.log("email:", email)//check krny kly k data aa raha bhi rha hai k nhi
   //2. vaidate krny kly
   if(!password || !email || !username || !fullName )
@@ -42,6 +43,7 @@ export const registerUser = asyncHandler(async (req,res)=>{
       
     // });
   }
+     console.log("🖼️ CoverImage file:", req.files?.coverImage?.[0]?.originalname);
 
   // step 3 : check krny kly k user already exist krta hai k nhi
   const existUser= await User.findOne({
@@ -57,7 +59,15 @@ export const registerUser = asyncHandler(async (req,res)=>{
 
   //step 4 : check krna k avtar hai ya nhi and cover Image bhi
   const avatarLocalPath=req.files?.avatar[0]?.path;
-  const imageLocalPath=req.files?.coverImage[0]?.path;
+  // const imageLocalPath=req.files?.coverImage[0]?.path;
+
+  //classic way to write above line
+  let imageLocalPath="";
+  if(req.files?.coverImage?.length >0)
+  {
+    imageLocalPath=req.files.coverImage[0].path;
+  }
+
   if(!avatarLocalPath)
   {
     throw new ApiError(400,
@@ -68,7 +78,7 @@ export const registerUser = asyncHandler(async (req,res)=>{
 
 
    const Avatar=await uploadCloudinary(avatarLocalPath);
-   const coverImage= await uploadCloudinary(imageLocalPath);
+   const CoverImage= await uploadCloudinary(imageLocalPath);
 
    if(!Avatar)
    {
@@ -83,7 +93,7 @@ export const registerUser = asyncHandler(async (req,res)=>{
     password,
     username:username.toLowerCase(),
     avatar:Avatar.url,
-    coverImage:coverImage?.url || "",
+    coverImage:CoverImage?.url || "",
    })
 //    //step 6 :remove password and refresh token from response
 //   //  user.password=undefined;
@@ -102,7 +112,7 @@ export const registerUser = asyncHandler(async (req,res)=>{
   }
   //step 8: send response to frontend
   return res.status(201).json(
-    new ApiResponse(200, "User registered successfully")
+    new ApiResponse(200, "User registered successfully",createdUser)
   )
 
 });
