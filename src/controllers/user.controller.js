@@ -116,3 +116,77 @@ export const registerUser = asyncHandler(async (req,res)=>{
   )
 
 });
+
+//generate tokens
+const generateAccessAndRefreshToken=async(userId)=>{
+  try {
+      const user =await User.findById(userId);
+  const accessToken=user.generateAccessToken();
+  const refreshToken=user.generateRefreshToken();
+  user.refreshToken=refreshToken;
+  await user.save({validateBeforeSave:false})
+  return({accessToken,refreshToken})
+
+  } catch (error) {
+    throw new ApiError(501,'something went wrong in generating access and refresh token')
+    
+  }
+}
+
+
+export const LoginUser=asyncHandler(async(req, res)=>
+{
+   // get data from from frontend req.body
+   //username or email k through login kr skty hai
+   //validate krna ya user or email find krna
+   //password check krna
+    //generate jwt tokens (access and refresh)
+    //send tokens to cookies
+
+    // step1: get data from frontend
+    const {username,email,password}=req.body;
+    // step2: validate data
+    if(!username || !email)
+    {
+      throw  new ApiError(400,"username or email are required")
+    }
+    //step 3 find username or x
+    const user=await User.findOne(
+      $or [
+        {username},{email}
+      ]
+    )
+
+    if(!user){
+      throw new ApiError(404,"user is not exist")
+    }
+    const ispasswordvalid=await user.isPasswordMatch(password);
+
+    if(!ispasswordvalid)
+    {
+      throw new ApiError(401,"Invalid user credentials");
+    }
+
+    const {accessToken,refreshToken}=generateAccessAndRefreshToken(user._id);
+
+    const  loggedInUser= await User.findById(user._id).select("-password -refreshToken")
+
+    const options={
+      httpOnly:true,
+      secure:true
+    }
+    return res
+    .status(200)
+    .cookie("accessToken",accessToken,options)
+    .cookie("refreshToken",refreshToken,options)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user:loggedInUser,accessToken,refreshToken
+        },
+        "user  loggedIn successfully"
+      )
+    )
+
+  })
