@@ -6,8 +6,9 @@ import { ApiError } from './utils/ApiError.js';
 const app=express();
 
 app.use(cors({
-    origin:process.env.CORS_ORIGIN,
-    credentials:true
+    origin: true, // Allow all origins in development
+    credentials: true,
+    exposedHeaders: ['Set-Cookie']
 }))
 
 app.use(express.json({limit:"16kb"}));
@@ -18,7 +19,7 @@ app.use(cookieParser());
 
 
 //routes
-import router from './routes/user.route';
+import router from './routes/user.route.js';
 
 app.use('/api/v1/users',router);
 // Global Error Handler Middleware

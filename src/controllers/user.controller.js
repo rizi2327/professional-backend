@@ -16,7 +16,7 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 
 
 
-
+//user register controller
 export const registerUser = asyncHandler(async (req,res)=>{
  
 // //   const { name, email, password } = req.body;
@@ -121,41 +121,45 @@ export const registerUser = asyncHandler(async (req,res)=>{
 const generateAccessAndRefreshToken=async(userId)=>{
   try {
       const user =await User.findById(userId);
-  const accessToken=user.generateAccessToken();
-  const refreshToken=user.generateRefreshToken();
-  user.refreshToken=refreshToken;
-  await user.save({validateBeforeSave:false})
-  return({accessToken,refreshToken})
+      const accessToken=user.generateAccessToken();
+      const refreshToken=user.generateRefreshToken();
+      user.refreshToken=refreshToken;
+      await user.save({validateBeforeSave:false})
+      return({accessToken,refreshToken})
 
   } catch (error) {
-    throw new ApiError(501,'something went wrong in generating access and refresh token')
+      throw new ApiError(501,'something went wrong in generating access and refresh token')
     
   }
 }
 
-
-export const LoginUser=asyncHandler(async(req, res)=>
+//login controller
+export const loginUser=asyncHandler(async(req, res)=>
 {
-   // get data from from frontend req.body
-   //username or email k through login kr skty hai
-   //validate krna ya user or email find krna
-   //password check krna
-    //generate jwt tokens (access and refresh)
-    //send tokens to cookies
+  console.log('loginUser called, body:', req.body);
+  // get data from from frontend req.body
+  //username or email k through login kr skty hai
+  //validate krna ya user or email find krna
+  //password check krna
+   //generate jwt tokens (access and refresh)
+   //send tokens to cookies
 
     // step1: get data from frontend
     const {username,email,password}=req.body;
     // step2: validate data
-    if(!username || !email)
-    {
-      throw  new ApiError(400,"username or email are required")
+    if(!(username || email)){
+      throw new ApiError(400,"username and email is required")
     }
+    // if(!username || !email) wrong
+    //if(!(username || email)) sahi
+    // {
+    //   throw  new ApiError(400,"username or email are required")
+    // }
     //step 3 find username or x
-    const user=await User.findOne(
-      $or [
-        {username},{email}
-      ]
-    )
+    const user = await User.findOne({
+  $or: [{ username }, { email }]
+});
+
 
     if(!user){
       throw new ApiError(404,"user is not exist")
@@ -167,26 +171,72 @@ export const LoginUser=asyncHandler(async(req, res)=>
       throw new ApiError(401,"Invalid user credentials");
     }
 
-    const {accessToken,refreshToken}=generateAccessAndRefreshToken(user._id);
+    const {accessToken,refreshToken}=await generateAccessAndRefreshToken(user._id);
 
     const  loggedInUser= await User.findById(user._id).select("-password -refreshToken")
 
-    const options={
-      httpOnly:true,
-      secure:true
+    const options = {
+      httpOnly: true,
+      secure: false,
+      // sameSite: 'None',
+      // path: '/',
+      // domain: 'localhost'
     }
+
+    console.log("Setting cookies with options:", options);
+    console.log("Access token:", accessToken);
+    
     return res
     .status(200)
-    .cookie("accessToken",accessToken,options)
-    .cookie("refreshToken",refreshToken,options)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
     .json(
       new ApiResponse(
         200,
         {
-          user:loggedInUser,accessToken,refreshToken
+          user: loggedInUser,
+          accessToken,
+          refreshToken
         },
-        "user  loggedIn successfully"
+        "user loggedIn successfully"
       )
     )
 
   })
+//logout controller
+export const logOutUser=asyncHandler(async(req,res)=>{
+  console.log('Cookies received:', req.cookies);
+  await User.findByIdAndUpdate(// ye Mongoose ka mthod hai jis mn wo user ko id k through access krta hai or phir us k baad usko update kr data hai .
+    // req.user._id k through ye user ko access kry ga database mn sy
+    req.user._id,{
+      $set:{
+        // $set method ye btata hai k ap ny kn kn sy fields update krny hain jsy ap yhn  refreshToken ko update kia hai 
+        refreshToken:undefined
+      }
+
+    },
+    {
+      //agr return new true nhi kro gy tu old user return kry gy with refreshToken k sath 
+      new:true
+    }
+  )
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // Only use secure in production
+    sameSite: 'strict'
+  }
+   return res
+   .status(200)
+   .clearCookie("accessToken", options)
+   .clearCookie("refreshToken", options)
+   .json(new ApiResponse(200, {}, "user logged out"))
+})
+
+//AccessRefresh token controller to get refresh token 
+export const accessRefreshToke=asyncHandler(async(req,res)=>
+{
+  const incomingRefreshToken=req.cookies.refreshToken || req.body.refreshToken //req.body is ly k wo mobile sy na use kr rha ho 
+  if(!in) 
+})
+
+  
