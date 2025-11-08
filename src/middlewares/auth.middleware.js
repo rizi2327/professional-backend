@@ -6,19 +6,9 @@ import jwt from "jsonwebtoken";
 export const verifyJWT = asyncHandler(async (req, _, next) => {
     // get token from cookie or Authorization header
     try {
-        console.log("Incoming request cookies:", req.cookies);
-        console.log("Authorization header:", req.headers.authorization);
-        
-        let token = null;
-        
-        // First try to get from cookies
-        if (req.cookies?.accessToken) {
-            token = req.cookies.accessToken;
-        }
-        // Then try Authorization header
-        else if (req.headers?.authorization?.startsWith('Bearer ')) {
-            token = req.headers.authorization.split(' ')[1];
-        }
+        const token = req.cookies?.accessToken || 
+            req.headers?.authorization?.replace("Bearer ", "") || 
+            null;
 
         if (!token) {
             throw new ApiError(401, "unauthorized request: token missing");

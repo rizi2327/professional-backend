@@ -3,6 +3,7 @@ import { ApiError } from '../utils/ApiError.js';
 import {asyncHandler} from '../utils/asyncHandler.js';
 import { uploadCloudinary } from '../utils/cloudinary.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
+import jwt from "jsonwebtoken"
 
   //WRITE STEPS TO REGISTER USER
   //.1 get data from frontend
@@ -233,10 +234,66 @@ export const logOutUser=asyncHandler(async(req,res)=>{
 })
 
 //AccessRefresh token controller to get refresh token 
-export const accessRefreshToke=asyncHandler(async(req,res)=>
-{
-  const incomingRefreshToken=req.cookies.refreshToken || req.body.refreshToken //req.body is ly k wo mobile sy na use kr rha ho 
-  if(!in) 
-})
-
+export const accessRefreshToken = asyncHandler(async(req,res)=>{
   
+  // 1) Client refresh token cookie ya body me de raha hota hai
+  const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken 
+
+  if(!incomingRefreshToken){
+    // Agar user ne refresh token bheja hi nahi → wo unauthorized hai
+    throw new ApiError(401,"unauthorized request")
+  } 
+
+  // 2) Validate token → check it is real or fake
+  try {
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET,
+    )
+  
+    // decodedToken ab kuch is tarha hoga:
+    // { _id: '690cd479cbf18de857649bb7', iat: 1762537928, exp: 1763401928 }
+  
+    // 3) Database ke ander user ko find karo
+    const user = await User.findById(decodedToken._id)//qk jb ap ny refresh token gen kia tha tb ap ny _id di thi us k through ap user ko get kro gy
+  
+    if(!user){
+      throw new ApiError(401,"Invalid refresh token - user not found")
+    }
+  
+    // 4) Ensure user ke record me jo refresh token stored hai
+    // Wo client se match karta ho (hacking se bachne ke liye)
+    if(incomingRefreshToken !== user.refreshToken){
+      throw new ApiError(401,"Refresh token is expired or already used")
+    }
+  
+    const options={
+      httpOnly:true,
+      secure:true
+    }
+    // 5) New Access Token generate kar do
+    // const newAccessToken = user.generateAccessToken()
+  
+    // // Optionally, Refresh Token bhi rotate karo (security best practice)
+    // const newRefreshToken = user.generateRefreshToken()
+    // user.refreshToken = newRefreshToken
+    // await user.save({ validateBeforeSave:false })
+  
+    //ye method oper bnaya hua hai is ly 
+    const {accessToken,newRefreshToken} = await generateAccessAndRefreshToken(user._id);
+    // 6) Send new tokens
+    return res
+    .cookie("accessToken",accessToken,options)
+    .cookie("refreshToken",newRefreshToken,{httpOnly:true,secure:false})// ye options bhi use kr skty ho
+    .json(
+     new ApiResponse(
+      200,
+      {accessToken,newRefreshToken},
+      "Access Token is refreshed "
+     )
+    )
+  } catch (error) {
+    throw new ApiError(401,error?.message || "Invalid refresh token")  
+  }
+
+})

@@ -1,5 +1,5 @@
 import express from "express";
-import { loginUser, logOutUser, registerUser } from "../controllers/user.controller.js";
+import { accessRefreshTokeN, loginUser, logOutUser, registerUser } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router = express.Router();
@@ -24,6 +24,7 @@ router.route("/register").post(
 
  //user logout route with middleware verify user is logged or not  so verify  JWT middleware inject before logout
  router.route("/logout").post(verifyJWT,logOutUser);
+ router.route("/refresh-token").post(accessRefreshTokeN)
 
 
 export default router;
