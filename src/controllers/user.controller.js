@@ -297,3 +297,14 @@ export const accessRefreshToken = asyncHandler(async(req,res)=>{
   }
 
 })
+
+export const changeCurrentPassword=asyncHandler(async(req,res)=>
+{
+  const {oldPassword,newPassword}=req.body;
+  const user= await User.findById(user._id);
+  const isPasswordCorrect=user.isPasswordCorrect(oldPassword)
+  if(!isPasswordCorrect)
+  {
+    throw new ApiError(401, "invalid old passwaord")
+  }
+})
