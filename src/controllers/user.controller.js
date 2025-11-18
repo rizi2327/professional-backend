@@ -134,6 +134,10 @@ const generateAccessAndRefreshToken=async(userId)=>{
   }
 }
 
+
+
+
+
 //login controller
 export const loginUser=asyncHandler(async(req, res)=>
 {
@@ -204,6 +208,10 @@ export const loginUser=asyncHandler(async(req, res)=>
     )
 
   })
+
+
+
+
 //logout controller
 export const logOutUser=asyncHandler(async(req,res)=>{
   console.log('Cookies received:', req.cookies);
@@ -232,6 +240,10 @@ export const logOutUser=asyncHandler(async(req,res)=>{
    .clearCookie("refreshToken", options)
    .json(new ApiResponse(200, {}, "user logged out"))
 })
+
+
+
+
 
 //AccessRefresh token controller to get refresh token 
 export const accessRefreshToken = asyncHandler(async(req,res)=>{
@@ -297,6 +309,9 @@ export const accessRefreshToken = asyncHandler(async(req,res)=>{
   }
 
 })
+
+
+
 
 export const changeCurrentPassword=asyncHandler(async(req,res)=>
 {
