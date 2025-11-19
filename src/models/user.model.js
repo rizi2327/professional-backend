@@ -32,7 +32,11 @@ const userSchema= new Schema({
     avatar:{
         type:String,
         required:true,
-    },cover_image:{
+    },
+    avatarPublicId:{
+        type:String,
+    },
+    cover_image:{
           type:String,
     },
     watchHistory:[

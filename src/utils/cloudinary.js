@@ -34,6 +34,16 @@ const uploadCloudinary = async(localFilePath) => {
     }
     console.log("🌐 Cloudinary Response:", response);
     return response;
+    // Optional: Function to delete image from Cloudinary agr ap controller mn destroy kr rhy hain tu ye na user model mn hona
+//     const deleteCloudinaryImage = async (publicId) => {
+//   try {
+//     return await cloudinary.uploader.destroy(publicId);
+//   } catch (err) {
+//     console.log("❌ Error deleting image:", err);
+//     return null;
+//   }
+// }
+
   } catch (error) {
     console.error("❌ Cloudinary upload failed:", error);
     

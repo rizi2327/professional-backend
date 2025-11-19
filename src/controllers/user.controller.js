@@ -407,13 +407,19 @@ export const updateUserAvatar=asyncHandler(async(req,res)=>{
   if(!avatar.url){
     throw new ApiError(500,"error in uploading avatar")
   }
+
+  //old avatar delete krna hai cloudinary sy
+  // agr avatar ki image exist krti hai tu usko delete kr do 
+  if(req.user?.avatarPublicId){
+    await cloudinary.uploader.destroy(req.user.avatarPublicId);
+  }
   //find user from db and update avatar
   const updatedUser= await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set:{
-        avatar:avatar.url
-
+        avatar:avatar.url,
+        avatarPublicId:avatar.public_id
       }
     },{
       new :true
@@ -423,7 +429,11 @@ export const updateUserAvatar=asyncHandler(async(req,res)=>{
   if(!updatedUser){
     throw new ApiError(500,"error in updating user avatar")
   }
+  
+  
 
+
+  //send response to frontend
   return res 
   .status(200)
   .json(new ApiResponse(200,updatedUser,"user avatar updated successfully"))
