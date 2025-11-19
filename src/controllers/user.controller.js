@@ -118,6 +118,8 @@ export const registerUser = asyncHandler(async (req,res)=>{
 
 });
 
+
+
 //generate tokens
 const generateAccessAndRefreshToken=async(userId)=>{
   try {
@@ -312,14 +314,152 @@ export const accessRefreshToken = asyncHandler(async(req,res)=>{
 
 
 
-
+//change current password controller
 export const changeCurrentPassword=asyncHandler(async(req,res)=>
 {
-  const {oldPassword,newPassword}=req.body;
+  //get old password , new password , confirm password from req.body
+  const {oldPassword,newPassword,confPassword}=req.body;
+
+  //find user from db
   const user= await User.findById(user._id);
+  // if user not found throw error
+  if(!user){
+    throw new ApiError(404,"user not found");
+  }
+
+  // for any missing fields 
+  if(!(oldPassword && newPassword && confPassword))
+  {
+    throw new ApiError(400,"all fields are required")
+  }
+
+  //for new password and confirm password matching
+  if(!(confPassword==newPassword)){
+    throw new ApiError(400,"new password and confirm password do not match")
+  }
+
+  //for checking old password is correct or not 
   const isPasswordCorrect=user.isPasswordCorrect(oldPassword)
+  //if not correct throw error 
   if(!isPasswordCorrect)
   {
     throw new ApiError(401, "invalid old passwaord")
   }
+
+  //update user password 
+  user.password=newPassword
+  //savd user to db
+  await user.save({validateBeforeSave:false})
+
+  //send response  to frontend
+  return res
+  .status(200)
+  .json(new ApiResponse(200,{},"password is changed successfully"))
+})
+
+
+//get current user controller
+export const getCurrentUser=asyncHandler(async(req,res)=>{
+  // this code is run when i do not user authentication middleware is not used we use and user is get from req.user so do not need to write this code 
+  
+  // const user= await User.findById(req.user._id).select("-password -refreshToken");
+  // if(!user){
+  //   throw new ApiError(404,"user not found")
+  // }
+
+  //send response to frontend that user is fetched successfully
+  return res
+  .status(200)
+  .json(new ApiResponse(200,req.user,"current user fetched successfully"))
+})
+
+
+
+
+//delete user account controller
+export const deleteUserAccount=asyncHandler(async(req,res)=>
+{
+  {
+    //find user from db and delete
+    const deletedUser= await User.findByIdAndDelete(req.user._id)
+    if(!deletedUser){
+      throw new ApiError(500,"error in deleting user accout")
+    }
+    //send response to frontend
+    return res
+    .status(200)
+    .json(new ApiResponse(200,{},"user account deleted successfully"))
+  }
+}
+)
+
+
+
+//update user avatar controller
+export const updateUserAvatar=asyncHandler(async(req,res)=>{
+  //get avatar from req.file
+  const avatarLocalPath=req.file?.path;
+  if(!avatarLocalPath){
+    throw new ApiError(400,"avatar is required")
+  }
+  //upload avatar to cloudinary 
+  const Avatar=await uploadCloudinary(avatarLocalPath);
+  if(!Avatar){
+    throw new ApiError(500,"error in uploading avatar")
+  }
+  //find user from db and update avatar
+  const updatedUser= await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set:{
+        avatar:Avatar.url
+
+      }
+    },{
+      new :true
+    }
+  ).select("-password -refreshToken")//yeh dono field remove kr dega response se
+
+  if(!updatedUser){
+    throw new ApiError(500,"error in updating user avatar")
+  }
+
+  return res 
+  .status(200)
+  .json(new ApiResponse(200,updatedUser,"user avatar updated successfully"))
+
+  
+})
+
+
+//update user details controller
+export const updateUserDetails=asyncHandler(async(req,res)=>{
+  //get user details form req.body
+  //depending on what user want to update and send only those fields to backend 
+  const {fullName,email,username}=req.body
+
+  //find user from db and update details
+  const updatedUser= await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      //$set is mongoose operater jo specific fields ko update krta hai or baqi fields ko jese ka tesa rehny dyta hai 
+      $set:{
+        fullName,
+        email:email?.toLowerCase(),
+        username:username?.toLowerCase()
+      }
+    },
+    {
+      // new means updated  user return kr do after saving
+      new:true,
+    }
+  ).select("-password -refreshToken");//yeh dono field remove kr dega response se
+
+  if(!updatedUser){
+    throw new ApiError(500,"error in updating user details ")
+  }
+
+  return res
+  .status(200)
+  .json(new ApiResponse(200,updatedUser,"user details updated successfully"))
 })
