@@ -403,16 +403,16 @@ export const updateUserAvatar=asyncHandler(async(req,res)=>{
     throw new ApiError(400,"avatar is required")
   }
   //upload avatar to cloudinary 
-  const Avatar=await uploadCloudinary(avatarLocalPath);
-  if(!Avatar){
+  const avatar=await uploadCloudinary(avatarLocalPath);
+  if(!avatar.url){
     throw new ApiError(500,"error in uploading avatar")
   }
   //find user from db and update avatar
   const updatedUser= await User.findByIdAndUpdate(
-    req.user._id,
+    req.user?._id,
     {
       $set:{
-        avatar:Avatar.url
+        avatar:avatar.url
 
       }
     },{
@@ -428,10 +428,49 @@ export const updateUserAvatar=asyncHandler(async(req,res)=>{
   .status(200)
   .json(new ApiResponse(200,updatedUser,"user avatar updated successfully"))
 
-  
+
 })
 
 
+
+
+//update user cover image controller
+export const updateUserCoverImage=asyncHandler(async(req,res)=>
+{
+  //get cover image from req.file
+  const coverImageLocalPath= req.file?.path;
+  if(!coverImageLocalPath){
+    throw new ApiError(400,"cover image is required")
+  }
+  //upload cover image to cloudinary 
+  const coverImage= await uploadCloudinary(coverImageLocalPath);
+  if(!coverImage.url){
+    throw new ApiError(500,"error in uploading cover image")
+  }
+  //find user from db and update cover image 
+  const updatedUser= await User.findByIdAndUpdate(
+    req.user._id,
+    {
+     $set:{
+      coverImage:coverImage.url
+     } 
+    },
+    {new:true}
+  ).select("-password -refreshToken");//yeh dono field remove kr dega response se
+
+  if(!updatedUser){
+    throw new ApiError(500,"error in updating user cover image")
+  }
+
+  return res 
+  .status(200)
+  .json(new ApiResponse(200,updatedUser,"user cover image updated successfully"))
+
+})
+
+
+
+//update user username , email , full name controller
 //update user details controller
 export const updateUserDetails=asyncHandler(async(req,res)=>{
   //get user details form req.body
