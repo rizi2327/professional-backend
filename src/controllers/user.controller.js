@@ -512,3 +512,71 @@ export const updateUserDetails=asyncHandler(async(req,res)=>{
   .status(200)
   .json(new ApiResponse(200,updatedUser,"user details updated successfully"))
 })
+
+
+export const getCurrentUserProfile=asyncHandler(async(req,res)=>{
+  const {username}=req.params;
+  if(!username)
+  {
+    throw new ApiError(400,"username is required");
+  }
+  const channel=await User.aggregate([//aggregate mongodb ka method hai jo complex queries krny kly use hota hai or yhn hum user collection mn sy data get kr rhy hain
+  {
+    $match:{username:username?.toLowerCase()}//yeh username jo frontend sy araha hai usko lowercase mn convert kr rhy hain or phir match kr rhy hain db mn sy
+  },
+  {
+    //for channel subscribers count 
+    //$lookup is mongoose method jo 2 collections ko join krta hai means yhn hum users collection ko subsritptions collection sy join kr rhy hain
+    $lookup:{
+      from:"subscriptions",
+      localField:"_id",
+      foreignField:"channel",
+      as:"subscribers"
+  }},
+  {
+    $lookup:{
+      from : "subcriptions",//ye wo schema hai jiska hum refernce ly rhy hain 
+      localField:"_id",//ye current user ka id hai 
+      foreignField:"subscriber",//ye subscriptions schema ka subscriber field hai
+      as :"subsribed channels"//ye wo naam hai jisme hum data store kr rhy hain
+    }
+  },
+  {
+    $addFields:{
+      subscribersCount:{
+        $size:"$subsribers",//$size mongodb operator hai jo array ki length return krta hai or yhn hum subscribers array ki length return kr rhy hain
+      },
+      subscribedTo:{
+        $size:"$subscribed channels"
+      },
+      isSubscribed:{
+       $cond:{
+        if:{$in:[req.user?._id,"$subscribers.subscriber"]},//$in mongodb operator hai jo check krta hai k koi value array mn exist krti hai k nhi or yhn hum check kr rhy hain k current logged in user ka id subscribers array mn exist krta hai k nhi
+        then:true,
+        else:false
+       }
+      }
+    }
+  },
+  {
+        $project:{//jo fields chahiye wo select kr lo response mn
+          password:0,
+          fullName:1,
+          email:1,
+          username:1,
+          avatar:1,
+          coverImage:1,
+          subscribersCount:1,
+          subscribedTo:1,
+          isSubscribed:1
+        }
+      }
+])
+if(!channel || channel.length===0)
+{
+  throw  new ApiError(404,"user not found")
+}
+return res
+.status(200)
+.json(new ApiResponse(200,channel[0],"user profile fetched successfully"))
+})
