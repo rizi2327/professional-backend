@@ -514,6 +514,8 @@ export const updateUserDetails=asyncHandler(async(req,res)=>{
 })
 
 
+
+//get current user profile controller
 export const getCurrentUserProfile=asyncHandler(async(req,res)=>{
   const {username}=req.params;
   if(!username)
@@ -581,28 +583,31 @@ return res
 .json(new ApiResponse(200,channel[0],"user profile fetched successfully"))
 })
 
+
+
+//get user watch history controller
 export  const getWatchHistory=asyncHandler(async(req,res)=>
 {
   //get user watch history from req.user
   const user = await User.aggregate([
     {
       $match:{
-        _id:new mongoose.Types.ObjectId(req.user._id)
+        _id:new mongoose.Types.ObjectId(req.user._id)//yeh ensure krta hai k jo id hum ny match krni hai wo mongoose object id hai
       }
     },
     {
-      $lookup:{
-        from:"videos",
-        localField:"watchHistory",
-        foreignField:"_id",
-        as:"watchHistoryVideos",
-        pipeline:[
+      $lookup:{//lookup mongodb ka operator hai jo 2 collections ko join krta hai
+        from:"videos",//yeh videos collection sy data la rhy hain
+        localField:"watchHistory",//yeh user schema ka field hai jisme video ids store hain
+        foreignField:"_id",//yeh videos schema ka field hai jisme video ids store hain
+        as:"watchHistoryVideos",//yeh wo naam hai jisme hum data store kr rhy hain
+        pipeline:[//pipeline mongodb ka operator hai jo hum ny lookup mn use kia hai jisme hum additional operations kr skty hain jsy k filtering , sorting , projecting etc
           {
-            $lookup:{
-              from:"users",
-              localField:"owner",
-              foreignField:"_id",
-              as :"owner",
+            $lookup:{//2nd lookup for owner details
+              from:"users",//yeh users collection sy data la rhy hain
+              localField:"owner",//yeh videos schema ka field hai jisme owner id store hain
+              foreignField:"_id",//yeh users schema ka field hai jisme user ids store hain
+              as :"owner",//yeh wo naam hai jisme hum data store kr rhy hain
               pipeline:[
                 {
                   $project:{
